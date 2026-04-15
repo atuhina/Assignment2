@@ -2,46 +2,44 @@ using UnityEngine;
 
 public class TotemPuzzle : MonoBehaviour
 {
-    public Transform targetDirection;
-    public Transform secretPanel;
-    public Vector3 panelClosedPosition;
-    public Vector3 panelOpenPosition;
+    public Transform targetDirection; // the direction the totem should face
+    public Transform secretPanel; // the door/panel that opens
+    public Vector3 panelClosedPosition; // closed position of the panel
+    public Vector3 panelOpenPosition; // open position of the panel
 
-    public Renderer totemRenderer;
-    public Renderer topRenderer;
-    public Renderer orbRenderer;
+    public Renderer topRenderer; // top part of the totem
+    public Renderer orbRenderer; // glowing orb on the totem
 
-    public ParticleSystem doorParticles;
+    public ParticleSystem doorParticles; // particles by the door
+    public AudioSource winAudio; // sound when puzzle is solved
 
-    public AudioSource winAudio;
-    private bool hasPlayedWinAudio = false;
-
-    public float rotateSpeed = 90f;
-    public float doorSpeed = 3f;
-    public float alignmentThreshold = 0.96f;
+    public float rotateSpeed = 90f; // how fast the totem rotates
+    public float doorSpeed = 3f; // how fast the panel opens
+    public float alignmentThreshold = 0.96f; // how exact the direction must be
 
     private bool playerNearby = false;
     private bool puzzleSolved = false;
     private bool hasPlayedParticles = false;
+    private bool hasPlayedWinAudio = false;
 
     private Vector3 orbInactiveScale;
     private Vector3 orbActiveScale = new Vector3(0.5f, 0.5f, 0.5f);
 
     void Start()
     {
-        if (orbRenderer != null)
-        {
-            orbInactiveScale = orbRenderer.transform.localScale;
-        }
+        // save the orb's starting size
+        orbInactiveScale = orbRenderer.transform.localScale;
     }
 
     void Update()
     {
+        // let player rotate the totem while nearby
         if (playerNearby && Input.GetKey(KeyCode.E) && !puzzleSolved)
         {
             transform.Rotate(0f, rotateSpeed * Time.deltaTime, 0f);
         }
 
+        // use dot product to check if the totem is facing the correct direction
         if (!puzzleSolved)
         {
             Vector3 toTarget = (targetDirection.position - transform.position).normalized;
@@ -51,12 +49,15 @@ public class TotemPuzzle : MonoBehaviour
             {
                 puzzleSolved = true;
 
-                if (!hasPlayedParticles && doorParticles != null)
+                // play particles once
+                if (!hasPlayedParticles)
                 {
                     doorParticles.Play();
                     hasPlayedParticles = true;
                 }
-                if (!hasPlayedWinAudio && winAudio != null)
+
+                // play win sound once
+                if (!hasPlayedWinAudio)
                 {
                     winAudio.Play();
                     hasPlayedWinAudio = true;
@@ -66,19 +67,18 @@ public class TotemPuzzle : MonoBehaviour
 
         if (puzzleSolved)
         {
-            if (topRenderer != null)
-                topRenderer.material.color = new Color(1f, 0.8f, 0.2f);
+            // show solved colors
+            topRenderer.material.color = new Color(1f, 0.8f, 0.2f);
+            orbRenderer.material.color = Color.cyan;
 
-            if (orbRenderer != null)
-            {
-                orbRenderer.material.color = Color.cyan;
-                orbRenderer.transform.localScale = Vector3.Lerp(
-                    orbRenderer.transform.localScale,
-                    orbActiveScale,
-                    Time.deltaTime * 5f
-                );
-            }
+            // make orb slightly bigger
+            orbRenderer.transform.localScale = Vector3.Lerp(
+                orbRenderer.transform.localScale,
+                orbActiveScale,
+                Time.deltaTime * 5f
+            );
 
+            // open the panel smoothly
             secretPanel.position = Vector3.Lerp(
                 secretPanel.position,
                 panelOpenPosition,
@@ -87,19 +87,18 @@ public class TotemPuzzle : MonoBehaviour
         }
         else
         {
-            if (topRenderer != null)
-                topRenderer.material.color = Color.gray;
+            // normal colors before solving
+            topRenderer.material.color = Color.gray;
+            orbRenderer.material.color = new Color(0.5f, 0.8f, 1f);
 
-            if (orbRenderer != null)
-            {
-                orbRenderer.material.color = new Color(0.5f, 0.8f, 1f);
-                orbRenderer.transform.localScale = Vector3.Lerp(
-                    orbRenderer.transform.localScale,
-                    orbInactiveScale,
-                    Time.deltaTime * 5f
-                );
-            }
+            // keep orb at normal size
+            orbRenderer.transform.localScale = Vector3.Lerp(
+                orbRenderer.transform.localScale,
+                orbInactiveScale,
+                Time.deltaTime * 5f
+            );
 
+            // keep panel closed before solving
             secretPanel.position = Vector3.Lerp(
                 secretPanel.position,
                 panelClosedPosition,
